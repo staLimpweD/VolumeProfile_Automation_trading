@@ -1,0 +1,47 @@
+# config/symbols.yaml - one entry per instrument the bot may trade.
+# The venue decides which feed/broker is used. Names must match EXACTLY what the venue lists.
+
+symbols:
+  XAUUSD:
+    enabled: true
+    venue: mt5
+    broker_symbol: "XAUUSD"     # Exness may add a suffix on some account types, e.g. "XAUUSDm". Check Market Watch.
+    timeframe: M15
+    higher_timeframe: H4        # used by the trend/regime filter
+    asset_class: metal
+    tick_size: 0.01             # informational; the live value is read from the broker
+    aavp:                       # optional overrides of bot.yaml -> aavp
+      anchor_mode: highest_volume
+      lookback: 200
+    guardian:                   # optional per-symbol overrides of guardian.yaml
+      max_spread_atr_fraction: 0.12
+
+  EURUSD:
+    enabled: false
+    venue: mt5
+    broker_symbol: "EURUSD"
+    timeframe: M15
+    higher_timeframe: H4
+    asset_class: forex
+    tick_size: 0.00001
+
+  SOLUSDT:
+    enabled: false              # enable after the exchange section in bot.yaml is on
+    venue: exchange
+    exchange_symbol: "SOL/USDT" # ccxt format
+    timeframe: M15
+    higher_timeframe: H4
+    asset_class: crypto
+    tick_size: 0.01
+    aavp:
+      anchor_mode: highest_volume
+      lookback: 200
+
+  BTCUSDT:
+    enabled: false
+    venue: exchange
+    exchange_symbol: "BTC/USDT"
+    timeframe: M15
+    higher_timeframe: H4
+    asset_class: crypto
+    tick_size: 0.01

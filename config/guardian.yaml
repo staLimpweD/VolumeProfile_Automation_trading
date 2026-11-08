@@ -1,0 +1,67 @@
+# config/guardian.yaml - the Guardian's rulebook.
+# Plain code enforces these. The AI cannot override them and the phone API cannot edit them.
+# Change a value only with a written reason, then restart the bot.
+
+account:
+  max_risk_per_trade_pct: 1.0       # % of equity risked if the stop-loss is hit
+  max_daily_loss_pct: 3.0           # stop trading for the day after this loss (realised + open)
+  max_weekly_loss_pct: 6.0
+  max_drawdown_pct: 12.0            # from peak equity; hitting it halts the bot until YOU resume it
+  max_open_positions: 2
+  max_positions_per_symbol: 1
+  max_total_risk_pct: 2.0           # sum of risk across all open trades
+  max_consecutive_losses: 3         # then pause and alert
+  min_free_margin_pct: 50.0         # of equity must stay free
+
+trade:
+  require_stop_loss: true
+  min_risk_reward: 1.5              # take-profit distance / stop-loss distance
+  min_stop_atr: 0.5                 # stop must be at least this many ATR away (avoids noise stops)
+  max_stop_atr: 4.0                 # ...and no further than this
+  max_slippage_pct: 0.10            # reject if price moved this much since the signal
+  signal_max_age_seconds: 120       # stale signals are dropped
+  cooldown_minutes_after_loss: 30   # per symbol
+
+market_conditions:
+  max_spread_atr_fraction: 0.15     # skip if spread > 15% of ATR
+  max_quote_age_seconds: 15         # stale quote = market closed or feed broken
+  min_atr_percentile: 20            # skip dead markets (ATR below this percentile of recent history)
+  max_atr_percentile: 97            # skip extreme volatility spikes
+  require_higher_tf_alignment: false   # set true once you have backtested it
+
+sessions:                            # UTC hours. Trades are allowed only inside these windows.
+  enabled: true
+  windows:
+    - {name: london,  start: "07:00", end: "16:00"}
+    - {name: newyork, start: "12:00", end: "21:00"}
+  crypto_24_7: true                  # crypto symbols ignore the session windows
+  block_weekend_forex: true          # no new FX/Gold trades after Friday close / before Sunday open
+  friday_cutoff_utc: "20:00"         # no new FX/Gold trades after this on Fridays
+
+news:
+  enabled: true
+  calendar_file: data/news_calendar.csv   # columns: time_utc, currency, impact, title
+  blackout_minutes_before: 30
+  blackout_minutes_after: 30
+  impact_levels: [high]
+  symbol_currencies:                 # which news affects which symbol
+    XAUUSD: [USD]
+    EURUSD: [EUR, USD]
+
+ai:
+  require_agreement: true            # AI must not disagree. It can veto but never create a trade.
+  min_confidence: 0.70
+
+kill_switch:
+  close_positions_on_kill: true
+  halt_on_unprotected_position: true # UnprotectedPositionError -> halt everything immediately
+  halt_on_feed_failure_minutes: 5    # no fresh data for this long -> pause and alert
+  halt_on_broker_disconnect_minutes: 3
+
+modes:
+  demo:
+    max_risk_per_trade_pct: 1.0
+  live:                              # live starts MORE cautious than demo
+    max_risk_per_trade_pct: 0.25
+    max_daily_loss_pct: 1.5
+    max_open_positions: 1

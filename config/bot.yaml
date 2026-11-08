@@ -1,0 +1,79 @@
+# config/bot.yaml - runtime settings for the whole bot.
+# Secrets (passwords, API keys, tokens) do NOT go here. They live in .env.
+
+bot:
+  name: cman-bot
+  mode: demo                    # demo | live. Start in demo and stay there for weeks.
+  loop_interval_seconds: 5      # how often the main loop wakes up
+  candles_per_fetch: 400        # must be >= aavp.lookback + a few spare
+  magic_number: 20260101        # tags this bot's MT5 orders so manual trades are never touched
+  state_file: data/state.json   # remembers pause/kill state across restarts
+  log_level: INFO
+  log_file: logs/bot.log
+  equity_interval_seconds: 60
+  health_interval_seconds: 15
+  signal_delay_seconds: 2
+  max_internal_errors: 20
+
+management:
+  breakeven_at_r: 0.0              # 0 = off. 1.0 moves the stop to entry once price is 1R in profit
+  breakeven_buffer_r: 0.10
+  flatten_fx_friday_utc: null      # e.g. "20:45" closes Forex/Gold before the weekend gap
+  close_unprotected: true
+  unprotected_ticks: 3
+
+# Which venue handles which kind of symbol (symbols themselves are in symbols.yaml)
+venues:
+  mt5:
+    enabled: true
+    server_utc_offset_hours: 0  # broker server clock vs UTC. MEASURE IT: compare a tick time with real UTC.
+    volume_field: tick_volume   # Forex/Gold only offer tick volume
+    require_stop_loss: true
+  exchange:
+    enabled: false              # turn on after MT5 is stable
+    id: binance                 # any ccxt id (binance, bybit, okx...). Confirm it is available to you.
+    market_type: spot           # spot (long only) | swap (long and short)
+    sandbox: true               # true = exchange testnet. Keep true until the demo phase is finished.
+    quote_currency: USDT
+    require_stop_loss: true
+
+# AAVP engine defaults (see aavp.py). Symbols can override these in symbols.yaml.
+aavp:
+  lookback: 200
+  anchor_mode: highest_volume   # highest_high | lowest_low | highest_volume
+  min_profile_bars: 5
+  atr_period: 14
+  atr_fraction: 0.10
+  max_rows: 400
+  value_area_pct: 0.70
+  lvn_ratio: 0.50
+  lvn_smooth: 3
+  live_candle: true
+  sweep_lookback: 20
+  lvn_lookback: 3
+  wick_ratio: 0.50
+  touch_tol_atr: 0.25
+
+# AI reviewer (Gemini). It can only ADD a veto or a confidence score. It can never size or place a trade.
+ai:
+  enabled: true
+  model: "SET_CURRENT_GEMINI_MODEL_NAME"   # copy the exact model name from Google AI Studio
+  timeout_seconds: 20
+  max_calls_per_day: 200        # hard cap on API usage and cost
+  min_confidence: 0.70          # below this the AI counts as "no"
+  on_failure: skip_trade        # skip_trade | allow_aavp_only. skip_trade is the safe choice.
+
+journal:
+  database: data/journal.sqlite3
+  backup_every_hours: 24
+
+api:
+  enabled: true
+  host: 127.0.0.1               # keep local. Put HTTPS (Caddy / tunnel) in front of it.
+  port: 8000
+  enable_docs: false            # set true only while developing
+
+alerts:
+  push_enabled: true            # Firebase Cloud Messaging via registered devices
+  heartbeat_minutes: 30         # "I'm alive" push. Silence means something is wrong.
+  notify_on: [trade_opened, trade_closed, guardian_veto, error, kill_switch, heartbeat_lost][cite: 4]
